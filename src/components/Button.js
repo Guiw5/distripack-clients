@@ -7,7 +7,7 @@ const Button = props => {
         (props.type === 'primary' ? 'btn btn-primary' : 'btn btn-secondary') +
         ' center-block col-md-5'
       }
-      style={{ float: 'none' }}
+      style={{ float: 'none', paddingBottom: '15px' }}
       onClick={props.action}
     >
       {props.title}

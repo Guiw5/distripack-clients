@@ -26,6 +26,20 @@ export class ClientForm extends Component {
         dni: '',
         postalCode: ''
       },
+      errors: {
+        firstName: { message: null, validated: false },
+        lastName: { message: null, validated: false },
+        email: { message: null, validated: false },
+        celPhone: { message: null, validated: false },
+        businessName: { message: null, validated: false },
+        fantasyName: { message: null, validated: false },
+        cuit: { message: null, validated: false },
+        location: { message: null, validated: false },
+        address: { message: null, validated: false },
+        phone: { message: null, validated: false },
+        dni: { message: null, validated: false },
+        postalCode: { message: null, validated: false }
+      },
       emailDisable: false,
       option: 'CUIT',
       radioOptions: ['DNI', 'CUIT'],
@@ -145,6 +159,41 @@ export class ClientForm extends Component {
     this.updateClientState(name, value)
   }
 
+  validateInput = target => {
+    if (target.validity.valueMissing)
+      return 'Complete el campo ' + target.title.replace(':', '')
+    if (target.validity.typeMismatch) return 'Formato inválido'
+    if (target.validity.patternMismatch) return 'Formato inválido'
+    return null
+    // switch (name) {
+    //   case 'email':
+    //     message = validEmail(value)
+    //   case 'cuit':
+    //     message = validCuit(value)
+    //   case 'celPhone':
+    //     message = validCelPhone(value)
+    //   case 'phone':
+    //     message = validPhone(value)
+    // }
+  }
+
+  onBlur = e => {
+    let name = e.target.name
+    let value = e.target.value
+    if (name === 'phone' && !value) return
+    let message = this.validateInput(e.target)
+    this.updateErrorsState(name, message)
+  }
+
+  updateErrorsState = (name, value) => {
+    this.setState(prevState => ({
+      errors: {
+        ...prevState.errors,
+        [name]: { message: value, validated: true }
+      }
+    }))
+  }
+
   updateClientState = (name, value) => {
     this.setState(prevState => ({
       client: { ...prevState.client, [name]: value }
@@ -154,11 +203,39 @@ export class ClientForm extends Component {
   handleFormSubmit = async e => {
     try {
       e.preventDefault()
-      let client = this.state.client
-      await http.put('/clients', client)
+      if (!e.target.checkValidity()) {
+        var errors = this.validateForm(e)
+        this.updateErrors(errors)
+      } else {
+        let client = this.state.client
+        await http.put('/clients', client)
+      }
     } catch (error) {
       console.log('error', error.message)
     }
+  }
+
+  updateErrors(errors) {
+    this.setState(prevState => ({
+      ...prevState,
+      errors
+    }))
+  }
+
+  validateForm(e) {
+    var errors = {}
+    for (let i = 0; i < e.target.length; i++) {
+      const input = e.target[i]
+      if (input.type !== 'button' && input.type !== 'radio') {
+        if (input.name === 'phone' && !input.value) {
+          errors[input.name] = { message: null, validated: false }
+        } else {
+          let message = this.validateInput(input)
+          errors[input.name] = { message, validated: true }
+        }
+      }
+    }
+    return errors
   }
 
   render() {
@@ -168,15 +245,22 @@ export class ClientForm extends Component {
         <h5 className="text-center">Rogamos, complete sus datos</h5>
         <br />
         <div className="container-fluid">
-          <form className="form-horizontal" onSubmit={this.handleFormSubmit}>
+          <form
+            className="form-horizontal"
+            noValidate
+            onSubmit={this.handleFormSubmit}
+          >
             <Input
               tabIndex={1}
               title={'Email:'}
               name={'email'}
               inputType={'email'}
               value={this.state.client.email}
-              placeholder={'Ingrese su email'}
+              placeholder={'ej: distripack@yahoo.com.ar'}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['email'].message}
+              validated={this.state.errors['email'].validated}
               required
               disabled={this.state.emailDisable}
             />{' '}
@@ -188,6 +272,9 @@ export class ClientForm extends Component {
               value={this.state.client.firstName}
               placeholder={'Ingrese su nombre'}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['firstName'].message}
+              validated={this.state.errors['firstName'].validated}
               required
             />{' '}
             <Input
@@ -198,6 +285,9 @@ export class ClientForm extends Component {
               value={this.state.client.lastName}
               placeholder={'Ingrese su apellido'}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['lastName'].message}
+              validated={this.state.errors['lastName'].validated}
               required
             />{' '}
             <Input
@@ -206,10 +296,13 @@ export class ClientForm extends Component {
               name={'celPhone'}
               inputType={'tel'}
               value={this.state.client.celPhone}
-              placeholder={'Ingrese los 10 digitos: 2926454545'}
+              placeholder={'ej: 2926454545'}
               pattern="[0-9]{10}"
               onKeyPress={this.formatcelPhone}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['celPhone'].message}
+              validated={this.state.errors['celPhone'].validated}
               required
             />{' '}
             <Input
@@ -220,6 +313,9 @@ export class ClientForm extends Component {
               value={this.state.client.fantasyName}
               placeholder={'Ingrese nombre del local'}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['fantasyName'].message}
+              validated={this.state.errors['fantasyName'].validated}
               required
             />{' '}
             <Input
@@ -230,6 +326,9 @@ export class ClientForm extends Component {
               value={this.state.client.businessName}
               placeholder={'Ingrese razón social'}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['businessName'].message}
+              validated={this.state.errors['businessName'].validated}
               required
             />{' '}
             <Radio
@@ -248,9 +347,12 @@ export class ClientForm extends Component {
                 name={'cuit'}
                 inputType={'text'}
                 value={this.state.client.cuit}
-                placeholder={'Ingrese CUIT: 30-12345678-4 '}
+                placeholder={'ej: 30-12345678-4 '}
                 pattern="[0-9]{2}-[0-9]{8}-[0-9]{1}"
                 required
+                onBlur={this.onBlur}
+                error={this.state.errors['cuit'].message}
+                validated={this.state.errors['cuit'].validated}
                 onKeyPress={this.formatCuit}
                 onChange={this.handleInput}
               />
@@ -259,12 +361,15 @@ export class ClientForm extends Component {
               <Input
                 tabIndex={9}
                 title={'DNI:'}
-                name={'cuit'}
+                name={'dni'}
                 inputType={'text'}
-                value={this.state.client.cuit}
-                placeholder={'Ingrese DNI: 30.123.123 '}
+                value={this.state.client.dni}
+                placeholder={'ej: 30.123.123 '}
                 pattern="[0-9]{2}.[0-9]{3}.[0-9]{3}"
                 required
+                onBlur={this.onBlur}
+                error={this.state.errors['dni'].message}
+                validated={this.state.errors['dni'].validated}
                 onKeyPress={this.formatDni}
                 onChange={this.handleInput}
               />
@@ -275,9 +380,11 @@ export class ClientForm extends Component {
               name={'location'}
               options={Object.keys(this.state.locationOptions)}
               value={this.state.client.location}
-              inputType={'text'}
               placeholder={'seleccione localidad'}
               onChange={this.handleLocation}
+              onBlur={this.onBlur}
+              error={this.state.errors['location'].message}
+              validated={this.state.errors['location'].validated}
               required
             />{' '}
             <Input
@@ -288,6 +395,9 @@ export class ClientForm extends Component {
               value={this.state.client.address}
               placeholder={'Ingrese dirección del local: av casey 2345'}
               required
+              onBlur={this.onBlur}
+              error={this.state.errors['address'].message}
+              validated={this.state.errors['address'].validated}
               onChange={this.handleInput}
             />{' '}
             <Input
@@ -296,10 +406,13 @@ export class ClientForm extends Component {
               name={'phone'}
               inputType={'tel'}
               value={this.state.client.phone}
-              placeholder={'Ingrese los 6 digitos: 425566'}
+              placeholder={'ej: 425566'}
               pattern="[0-9]{6}"
               onKeyPress={this.formatPhone}
               onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors['phone'].message}
+              validated={this.state.errors['phone'].validated}
             />{' '}
             <Button type={'primary'} title={'Confirmar'} />
           </form>

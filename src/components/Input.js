@@ -1,9 +1,24 @@
 import React from 'react'
 
 const Input = props => {
-  let { name, title, message, inputType, onChange, ...inputProps } = props
+  let {
+    name,
+    title,
+    message,
+    error,
+    validated,
+    inputType,
+    onChange,
+    ...inputProps
+  } = props
+  let success = validated && !error
   return (
-    <div className="form-group">
+    <div
+      className={`form-group has-feedback
+       ${success ? 'has-success' : ''} 
+       ${error ? 'has-error' : ''}
+       `}
+    >
       <label
         htmlFor={name}
         className="control-label col-sm-4"
@@ -14,15 +29,22 @@ const Input = props => {
       <div className="col-sm-7">
         <input
           className="form-control"
-          title={message}
+          title={title}
           id={name}
           name={name}
           type={inputType}
           onChange={onChange}
           {...inputProps}
         />
+        <span
+          className={`
+          ${error ? 'glyphicon glyphicon-remove form-control-feedback' : ''}
+          ${success ? 'glyphicon glyphicon-ok form-control-feedback' : ''}
+          `}
+          aria-hidden="true"
+        />
+        {error ? <div className="invalid-feedback">{error}</div> : null}
       </div>
-      <span className="validity" />
     </div>
   )
 }

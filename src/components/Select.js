@@ -1,10 +1,28 @@
 import React from 'react'
 
 const Select = props => {
+  let {
+    name,
+    title,
+    message,
+    error,
+    validated,
+    onChange,
+    options,
+    placeholder,
+    ...selectProps
+  } = props
+  let success = validated && !error
+
   return (
-    <div className="form-group">
+    <div
+      className={`form-group has-feedback
+       ${success ? 'has-success' : ''} 
+       ${error ? 'has-error' : ''}
+       `}
+    >
       <label
-        htmlFor={props.name}
+        htmlFor={name}
         className="control-label col-sm-4"
         style={{ paddingRight: 0 }}
       >
@@ -14,16 +32,17 @@ const Select = props => {
       <div className="col-sm-7">
         <select
           tabIndex={props.tabIndex}
-          id={props.name}
-          name={props.name}
-          value={props.value}
-          onChange={props.onChange}
           className="form-control"
+          title={title}
+          id={name}
+          name={name}
+          onChange={onChange}
+          {...selectProps}
         >
           <option value="" disabled>
-            {props.placeholder}
+            {placeholder}
           </option>
-          {props.options.map(option => {
+          {options.map(option => {
             return (
               <option key={option} value={option} label={option}>
                 {option}
@@ -31,6 +50,15 @@ const Select = props => {
             )
           })}
         </select>
+        {/* <span
+          className={`
+          ${error ? 'glyphicon glyphicon-remove form-control-feedback' : ''}
+          ${success ? 'glyphicon glyphicon-ok form-control-feedback' : ''}
+          `}
+          style={{ marginRight: '5px' }}
+          aria-hidden="true"
+        /> */}
+        {error ? <div className="invalid-feedback">{error}</div> : null}
       </div>
     </div>
   )

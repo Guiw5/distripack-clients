@@ -14,9 +14,9 @@ const Input = props => {
   let success = validated && !error
   return (
     <div
-      className={`form-group has-feedback
-       ${success ? 'has-success' : ''} 
-       ${error ? 'has-error' : ''}
+      className={`form-group
+       ${success ? 'has-success has-feedback' : ''} 
+       ${error ? 'has-error has-feedback' : ''}
        `}
     >
       <label

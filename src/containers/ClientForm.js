@@ -393,7 +393,7 @@ export class ClientForm extends Component {
               name={'address'}
               inputType={'text'}
               value={this.state.client.address}
-              placeholder={'Ingrese dirección del local: av casey 2345'}
+              placeholder={'Dirección del local: av casey 2345'}
               required
               onBlur={this.onBlur}
               error={this.state.errors['address'].message}

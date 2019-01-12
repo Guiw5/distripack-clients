@@ -345,7 +345,7 @@ export class ClientForm extends Component {
                 tabIndex={8}
                 title={'CUIT:'}
                 name={'cuit'}
-                inputType={'text'}
+                inputType={'tel'}
                 value={this.state.client.cuit}
                 placeholder={'ej: 30-12345678-4 '}
                 pattern="[0-9]{2}-[0-9]{8}-[0-9]{1}"
@@ -362,7 +362,7 @@ export class ClientForm extends Component {
                 tabIndex={9}
                 title={'DNI:'}
                 name={'dni'}
-                inputType={'text'}
+                inputType={'tel'}
                 value={this.state.client.dni}
                 placeholder={'ej: 30.123.123 '}
                 pattern="[0-9]{2}.[0-9]{3}.[0-9]{3}"

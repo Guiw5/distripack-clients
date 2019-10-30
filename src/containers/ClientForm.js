@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-
+import { Redirect } from 'react-router-dom'
 import Input from '../components/Input'
 import Select from '../components/Select'
 import Button from '../components/Button'
@@ -7,7 +7,7 @@ import { http } from '../http'
 import queryString from 'query-string'
 import Radio from '../components/Radio'
 
-export class ClientForm extends Component {
+export class FirstStep extends Component {
   constructor(props) {
     super(props)
 
@@ -15,7 +15,148 @@ export class ClientForm extends Component {
       client: {
         firstName: '',
         lastName: '',
-        email: '',
+        email: ''
+      },
+      errors: {
+        firstName: { message: null, validated: false },
+        lastName: { message: null, validated: false },
+        email: { message: null, validated: false }
+      },
+      isUpdate: false,
+      toNext: false
+    }
+  }
+
+  componentDidMount() {
+    let { email } = queryString.parse(this.props.location.search)
+    if (email) {
+      this.setState(prevState => ({
+        ...prevState,
+        isUpdate: !prevState.isUpdate,
+        client: { ...prevState.client, email }
+      }))
+    }
+  }
+
+  updateErrorsState = (name, value) => {
+    this.setState(prevState => ({
+      errors: {
+        ...prevState.errors,
+        [name]: { message: value, validated: true }
+      }
+    }))
+  }
+
+  updateClientState = (name, value) => {
+    this.setState(prevState => ({
+      client: { ...prevState.client, [name]: value }
+    }))
+  }
+
+  handleInput = e => {
+    let value = e.target.value
+    let name = e.target.name
+
+    this.updateClientState(name, value)
+  }
+
+  onBlur = e => {
+    let name = e.target.name
+    let message = this.validateInput(e.target)
+    this.updateErrorsState(name, message)
+  }
+
+  validateInput = target => {
+    if (target.validity.valueMissing)
+      return 'Complete el campo ' + target.title.replace(':', '')
+    if (target.validity.typeMismatch) return 'Formato inválido'
+    if (target.validity.patternMismatch) return 'Formato inválido'
+    return null
+  }
+
+  handleFormSubmit = async e => {
+    try {
+      e.preventDefault()
+      let client = this.state.client
+      if (this.state.isUpdate) await http.put('/clients', client)
+      else await http.post('/clients/web', client)
+      this.setState(prevState => ({ toNext: !prevState.toNext }))
+    } catch (error) {
+      alert('No se pudo confirmar la operación, reintente mas tarde')
+    }
+  }
+
+  render() {
+    if (this.state.toNext)
+      return <Redirect to={{ pathname: '/next', state: this.state.client }} />
+
+    return (
+      <div className="col-md-4">
+        <h3 className="text-center">{`Bienvenido ${
+          this.state.client.firstName
+        }`}</h3>
+        <h5 className="text-center">Rogamos, complete sus datos</h5>
+        <br />
+        <div className="container-fluid">
+          <form
+            className="form-horizontal"
+            noValidate
+            onSubmit={this.handleFormSubmit}
+          >
+            <Input
+              tabIndex={1}
+              title={'Nombre:'}
+              name={'firstName'}
+              inputType={'text'}
+              value={this.state.client.firstName}
+              placeholder={'Ingrese su nombre'}
+              onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors.firstName.message}
+              validated={this.state.errors.firstName.validated}
+              required
+            />{' '}
+            <Input
+              tabIndex={2}
+              title={'Apellido:'}
+              name={'lastName'}
+              inputType={'text'}
+              value={this.state.client.lastName}
+              placeholder={'Ingrese su apellido'}
+              onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors.lastName.message}
+              validated={this.state.errors.lastName.validated}
+              required
+            />{' '}
+            <Input
+              tabIndex={3}
+              title={'Email:'}
+              name={'email'}
+              inputType={'email'}
+              value={this.state.client.email}
+              placeholder={'ej: distripack@yahoo.com.ar'}
+              onChange={this.handleInput}
+              onBlur={this.onBlur}
+              error={this.state.errors.email.message}
+              validated={this.state.errors.email.validated}
+              required
+              disabled={this.state.isUpdate}
+            />
+            <Button type={'success'} title={'Siguiente'} />
+          </form>
+        </div>
+      </div>
+    )
+  }
+}
+
+export class SecondStep extends Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      client: {
         celPhone: '',
         businessName: '',
         fantasyName: '',
@@ -27,9 +168,6 @@ export class ClientForm extends Component {
         postalCode: ''
       },
       errors: {
-        firstName: { message: null, validated: false },
-        lastName: { message: null, validated: false },
-        email: { message: null, validated: false },
         celPhone: { message: null, validated: false },
         businessName: { message: null, validated: false },
         fantasyName: { message: null, validated: false },
@@ -40,7 +178,6 @@ export class ClientForm extends Component {
         dni: { message: null, validated: false },
         postalCode: { message: null, validated: false }
       },
-      emailDisable: false,
       option: 'CUIT',
       radioOptions: ['DNI', 'CUIT'],
       locationOptions: {
@@ -48,18 +185,8 @@ export class ClientForm extends Component {
         'Pueblo Santa Trinidad': 7541,
         'Pueblo San José': 7541,
         'Pueblo Santa María': 7541
-      }
-    }
-  }
-
-  componentDidMount() {
-    let { email } = queryString.parse(this.props.location.search)
-    if (email) {
-      this.setState(prevState => ({
-        ...prevState,
-        emailDisable: true,
-        client: { ...prevState.client, email }
-      }))
+      },
+      ending: false
     }
   }
 
@@ -165,16 +292,6 @@ export class ClientForm extends Component {
     if (target.validity.typeMismatch) return 'Formato inválido'
     if (target.validity.patternMismatch) return 'Formato inválido'
     return null
-    // switch (name) {
-    //   case 'email':
-    //     message = validEmail(value)
-    //   case 'cuit':
-    //     message = validCuit(value)
-    //   case 'celPhone':
-    //     message = validCelPhone(value)
-    //   case 'phone':
-    //     message = validPhone(value)
-    // }
   }
 
   onBlur = e => {
@@ -204,11 +321,19 @@ export class ClientForm extends Component {
     try {
       e.preventDefault()
       if (!e.target.checkValidity()) {
-        var errors = this.validateForm(e)
+        const errors = this.validateForm(e)
         this.updateErrors(errors)
       } else {
-        let client = this.state.client
+        const { firstName, lastName, email } = this.props.location.state
+        const client = {
+          ...this.state.client,
+          firstName,
+          lastName,
+          email
+        }
+
         await http.put('/clients', client)
+        this.setState(prevState => ({ ending: !prevState.ending }))
       }
     } catch (error) {
       console.log('error', error.message)
@@ -239,9 +364,13 @@ export class ClientForm extends Component {
   }
 
   render() {
+    if (this.state.ending) return <Redirect to={{ pathname: '/end' }} />
+
     return (
       <div className="col-md-4">
-        <h3 className="text-center">Bienvenido</h3>
+        <h3 className="text-center">{`Bienvenido ${
+          this.props.location.state.firstName
+        }`}</h3>
         <h5 className="text-center">Rogamos, complete sus datos</h5>
         <br />
         <div className="container-fluid">
@@ -250,46 +379,6 @@ export class ClientForm extends Component {
             noValidate
             onSubmit={this.handleFormSubmit}
           >
-            <Input
-              tabIndex={1}
-              title={'Email:'}
-              name={'email'}
-              inputType={'email'}
-              value={this.state.client.email}
-              placeholder={'ej: distripack@yahoo.com.ar'}
-              onChange={this.handleInput}
-              onBlur={this.onBlur}
-              error={this.state.errors['email'].message}
-              validated={this.state.errors['email'].validated}
-              required
-              disabled={this.state.emailDisable}
-            />{' '}
-            <Input
-              tabIndex={2}
-              title={'Nombre:'}
-              name={'firstName'}
-              inputType={'text'}
-              value={this.state.client.firstName}
-              placeholder={'Ingrese su nombre'}
-              onChange={this.handleInput}
-              onBlur={this.onBlur}
-              error={this.state.errors['firstName'].message}
-              validated={this.state.errors['firstName'].validated}
-              required
-            />{' '}
-            <Input
-              tabIndex={3}
-              title={'Apellido:'}
-              name={'lastName'}
-              inputType={'text'}
-              value={this.state.client.lastName}
-              placeholder={'Ingrese su apellido'}
-              onChange={this.handleInput}
-              onBlur={this.onBlur}
-              error={this.state.errors['lastName'].message}
-              validated={this.state.errors['lastName'].validated}
-              required
-            />{' '}
             <Input
               tabIndex={4}
               title={'Celular:'}
@@ -301,8 +390,8 @@ export class ClientForm extends Component {
               onKeyPress={this.formatcelPhone}
               onChange={this.handleInput}
               onBlur={this.onBlur}
-              error={this.state.errors['celPhone'].message}
-              validated={this.state.errors['celPhone'].validated}
+              error={this.state.errors.celPhone.message}
+              validated={this.state.errors.celPhone.validated}
               required
             />{' '}
             <Input
@@ -314,8 +403,8 @@ export class ClientForm extends Component {
               placeholder={'Ingrese nombre del local'}
               onChange={this.handleInput}
               onBlur={this.onBlur}
-              error={this.state.errors['fantasyName'].message}
-              validated={this.state.errors['fantasyName'].validated}
+              error={this.state.errors.fantasyName.message}
+              validated={this.state.errors.fantasyName.validated}
               required
             />{' '}
             <Input
@@ -327,8 +416,8 @@ export class ClientForm extends Component {
               placeholder={'Ingrese razón social'}
               onChange={this.handleInput}
               onBlur={this.onBlur}
-              error={this.state.errors['businessName'].message}
-              validated={this.state.errors['businessName'].validated}
+              error={this.state.errors.businessName.message}
+              validated={this.state.errors.businessName.validated}
               required
             />{' '}
             <Radio
@@ -351,8 +440,8 @@ export class ClientForm extends Component {
                 pattern="[0-9]{2}-[0-9]{8}-[0-9]{1}"
                 required
                 onBlur={this.onBlur}
-                error={this.state.errors['cuit'].message}
-                validated={this.state.errors['cuit'].validated}
+                error={this.state.errors.cuit.message}
+                validated={this.state.errors.cuit.validated}
                 onKeyPress={this.formatCuit}
                 onChange={this.handleInput}
               />
@@ -368,8 +457,8 @@ export class ClientForm extends Component {
                 pattern="[0-9]{2}.[0-9]{3}.[0-9]{3}"
                 required
                 onBlur={this.onBlur}
-                error={this.state.errors['dni'].message}
-                validated={this.state.errors['dni'].validated}
+                error={this.state.errors.dni.message}
+                validated={this.state.errors.dni.validated}
                 onKeyPress={this.formatDni}
                 onChange={this.handleInput}
               />
@@ -383,8 +472,8 @@ export class ClientForm extends Component {
               placeholder={'seleccione localidad'}
               onChange={this.handleLocation}
               onBlur={this.onBlur}
-              error={this.state.errors['location'].message}
-              validated={this.state.errors['location'].validated}
+              error={this.state.errors.location.message}
+              validated={this.state.errors.location.validated}
               required
             />{' '}
             <Input
@@ -396,8 +485,8 @@ export class ClientForm extends Component {
               placeholder={'Dirección del local: av casey 2345'}
               required
               onBlur={this.onBlur}
-              error={this.state.errors['address'].message}
-              validated={this.state.errors['address'].validated}
+              error={this.state.errors.address.message}
+              validated={this.state.errors.address.validated}
               onChange={this.handleInput}
             />{' '}
             <Input
@@ -411,12 +500,24 @@ export class ClientForm extends Component {
               onKeyPress={this.formatPhone}
               onChange={this.handleInput}
               onBlur={this.onBlur}
-              error={this.state.errors['phone'].message}
-              validated={this.state.errors['phone'].validated}
+              error={this.state.errors.phone.message}
+              validated={this.state.errors.phone.validated}
             />{' '}
-            <Button type={'primary'} title={'Confirmar'} />
+            <Button type={'success'} title={'Finalizar'} />
           </form>
         </div>
+      </div>
+    )
+  }
+}
+
+export default class EndStep extends Component {
+  render() {
+    return (
+      <div>
+        Felicitaciones! se ha actualizado su información.
+        <br />
+        Muchas gracias por su colaboración
       </div>
     )
   }

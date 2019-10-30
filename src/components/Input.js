@@ -1,7 +1,7 @@
 import React from 'react'
 
 const Input = props => {
-  let {
+  const {
     name,
     title,
     message,
@@ -11,7 +11,7 @@ const Input = props => {
     onChange,
     ...inputProps
   } = props
-  let success = validated && !error
+  const success = validated && !error
   return (
     <div
       className={`form-group

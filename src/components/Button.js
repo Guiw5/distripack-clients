@@ -3,10 +3,8 @@ import React from 'react'
 const Button = props => {
   return (
     <button
-      className={
-        (props.type === 'primary' ? 'btn btn-primary' : 'btn btn-secondary') +
-        ' center-block col-md-5'
-      }
+      type="submit"
+      className={`btn btn-${props.type} center-block col-md-5`}
       style={{ float: 'none', marginBottom: '15px' }}
       onClick={props.action}
     >
